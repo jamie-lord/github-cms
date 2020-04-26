@@ -1,6 +1,7 @@
 <template>
   <div class="home">
     <button @click="logout">Logout</button>
+    <button @click="newPost">New post</button>
     <ul>
       <li v-for="post in posts" :key="post" @click="openFile(post)">
         {{ post }}
@@ -56,6 +57,14 @@ export default {
       this.$store.commit("logout");
       this.$router.push({ name: "Login" });
     },
+    newPost: function() {
+      this.postPath = "";
+      this.postSha = "";
+      this.postData = {
+        title: "",
+        date: new Date()
+      };
+    },
     listFiles: async function() {
       const result = await this.octokit.repos.getContents({
         owner: this.owner,
@@ -98,6 +107,15 @@ export default {
     save: async function() {
       if (this.postContent === "") {
         return;
+      }
+      // Generate path for new post
+      if (this.postSha === "") {
+        this.postPath = `_posts/${this.postData.date
+          .toISOString()
+          .slice(0, 10)}-${this.postData.title
+          .toLowerCase()
+          .split(" ")
+          .join("-")}.md`;
       }
       const result = await this.octokit.repos.createOrUpdateFile({
         owner: this.owner,
