@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <button @click="logout">Logout</button>
     <ul>
       <li v-for="post in posts" :key="post" @click="openFile(post)">
         {{ post }}
@@ -22,42 +23,54 @@ export default {
   components: { VueSimplemde },
   created: async function() {
     this.octokit = new Octokit({
-      auth: this.pat,
+      auth: this.pat
     });
     await this.listFiles();
   },
   data: function() {
     return {
-      pat: process.env.VUE_APP_PAT,
-      owner: process.env.VUE_APP_OWNER,
-      repo: process.env.VUE_APP_REPO,
       octokit: {},
       posts: [],
       postPath: "",
       postSha: "",
       postData: {
         title: "",
-        date: new Date(),
+        date: new Date()
       },
-      postContent: "",
+      postContent: ""
     };
   },
+  computed: {
+    owner() {
+      return this.$store.state.owner;
+    },
+    repo() {
+      return this.$store.state.repo;
+    },
+    pat() {
+      return this.$store.state.pat;
+    }
+  },
   methods: {
+    logout: function() {
+      this.$store.commit("logout");
+      this.$router.push({ name: "Login" });
+    },
     listFiles: async function() {
       const result = await this.octokit.repos.getContents({
         owner: this.owner,
         repo: this.repo,
-        path: "_posts",
+        path: "_posts"
       });
       // console.log(result);
-      this.posts = result.data.map((x) => x.path);
+      this.posts = result.data.map(x => x.path);
     },
     openFile: async function(postPath) {
       this.postPath = postPath;
       const result = await this.octokit.repos.getContents({
         owner: this.owner,
         repo: this.repo,
-        path: this.postPath,
+        path: this.postPath
       });
       // console.log(result);
       this.postSha = result.data.sha;
@@ -65,7 +78,6 @@ export default {
       const fm = matter(content);
       this.postData = fm.data;
       this.postContent = fm.content;
-      console.log();
     },
     b64EncodeUnicode: function(str) {
       return btoa(
@@ -95,11 +107,11 @@ export default {
         content: this.b64EncodeUnicode(
           matter.stringify(this.postContent, this.postData)
         ),
-        sha: this.postSha,
+        sha: this.postSha
       });
       console.log(result);
-    },
-  },
+    }
+  }
 };
 </script>
 
