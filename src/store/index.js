@@ -11,29 +11,35 @@ const vuexLocal = new VuexPersistence({
 
 export default new Vuex.Store({
   state: {
-    owner: "",
-    repo: "",
-    pat: ""
+    login: {
+      owner: "",
+      repo: "",
+      pat: ""
+    }
   },
   getters: {
     loggedIn: state => {
-      return state.owner !== "" && state.repo !== "" && state.pat !== "";
+      return (
+        state.login.owner !== "" &&
+        state.login.repo !== "" &&
+        state.login.pat !== ""
+      );
     }
   },
   mutations: {
     setOwner(state, owner) {
-      state.owner = owner;
+      state.login.owner = owner;
     },
     setRepo(state, repo) {
-      state.repo = repo;
+      state.login.repo = repo;
     },
     setPat(state, pat) {
-      state.pat = pat;
+      state.login.pat = pat;
     },
     logout(state) {
-      state.owner = "";
-      state.repo = "";
-      state.pat = "";
+      state.login.owner = "";
+      state.login.repo = "";
+      state.login.pat = "";
     }
   },
   actions: {},
