@@ -21,9 +21,11 @@ export default {
       if (this.owner === "" || this.repo === "" || this.pat === "") {
         return;
       }
-      this.$store.commit("setOwner", this.owner);
-      this.$store.commit("setRepo", this.repo);
-      this.$store.commit("setPat", this.pat);
+      this.$store.commit("setLogin", {
+        owner: this.owner,
+        repo: this.repo,
+        pat: this.pat
+      });
       this.$router.push({ name: "Home" });
     }
   }

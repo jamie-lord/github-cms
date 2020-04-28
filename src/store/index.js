@@ -27,14 +27,8 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    setOwner(state, owner) {
-      state.login.owner = owner;
-    },
-    setRepo(state, repo) {
-      state.login.repo = repo;
-    },
-    setPat(state, pat) {
-      state.login.pat = pat;
+    setLogin(state, login) {
+      state.login = login;
     },
     logout(state) {
       state.login.owner = "";
