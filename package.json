@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^17.6.0",
+    "buefy": "^0.8.17",
     "core-js": "^3.6.4",
     "gray-matter": "^4.0.2",
     "vue": "^2.6.11",

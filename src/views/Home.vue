@@ -1,43 +1,78 @@
 <template>
-  <div class="home">
-    <button @click="logout">Logout</button>
-    <button @click="newPost">New post</button>
-    <div v-if="publishedPosts.length > 0">
-      <h2>Published posts</h2>
-      <ul>
-        <li
-          v-for="post in publishedPosts"
-          :key="post.sha"
-          @click="openFile(post.path)"
-        >
-          {{ post.name }}
-          <button @click="makePostDraft(post.path, post.sha)">
-            Make draft
-          </button>
-          <button @click="deletePost(post.path, post.sha)">Delete</button>
-        </li>
-      </ul>
+  <div class="columns">
+    <div class="column is-one-quarter">
+      <b-sidebar position="static" type="is-light" open>
+        <div style="padding: 1rem">
+          <b-menu>
+            <b-menu-list label="Posts">
+              <b-menu-item
+                icon="file-plus"
+                label="New post"
+                @click="newPost"
+              ></b-menu-item>
+              <b-menu-item
+                active
+                expanded
+                label="Published posts"
+                :disabled="publishedPosts.length === 0"
+              >
+                <b-menu-item
+                  v-for="post in publishedPosts"
+                  :key="post.sha"
+                  @click="openFile(post.path)"
+                  ><template slot="label">
+                    {{ post.name }}
+                    <b-button
+                      type="is-light"
+                      icon-right="delete"
+                      @click="deletePost(post.path, post.sha)"
+                    /> </template
+                ></b-menu-item>
+              </b-menu-item>
+              <b-menu-item
+                active
+                expanded
+                icon="settings"
+                label="Draft posts"
+                :disabled="draftPosts.length === 0"
+              >
+                <b-menu-item
+                  icon="account"
+                  :label="post.name"
+                  v-for="post in draftPosts"
+                  :key="post.sha"
+                  @click="openFile(post.path)"
+                ></b-menu-item>
+              </b-menu-item>
+            </b-menu-list>
+            <b-menu-list label="Actions">
+              <b-menu-item
+                icon="logout"
+                label="Logout"
+                @click="logout"
+              ></b-menu-item>
+            </b-menu-list>
+          </b-menu>
+        </div>
+      </b-sidebar>
     </div>
-    <div v-if="draftPosts.length > 0">
-      <h2>Draft posts</h2>
-      <ul>
-        <li
-          v-for="post in draftPosts"
-          :key="post.sha"
-          @click="openFile(post.path)"
+    <div class="column">
+      <b-field label="Title">
+        <b-input v-model="postData.title"></b-input>
+      </b-field>
+      <b-field label="Published">
+        <b-datetimepicker
+          rounded
+          placeholder="Click to select..."
+          icon="calendar-today"
+          horizontal-time-picker
+          v-model="postData.date"
         >
-          {{ post.name }}
-          <button @click="makePostPublished(post.path, post.sha)">
-            Publish
-          </button>
-          <button @click="deletePost(post.path, post.sha)">Delete</button>
-        </li>
-      </ul>
+        </b-datetimepicker>
+      </b-field>
+      <vue-simplemde v-model="postContent" />
+      <b-button type="is-primary" @click="save">Publish</b-button>
     </div>
-    <input v-model="postData.title" />
-    <input type="datetime-local" v-model="postData.date" />
-    <vue-simplemde v-model="postContent" />
-    <button @click="save">Save</button>
   </div>
 </template>
 
@@ -68,15 +103,15 @@ export default {
       postSha: "",
       postData: {
         title: "",
-        date: new Date()
+        date: new Date(),
       },
-      postContent: ""
+      postContent: "",
     };
   },
   computed: {
     login() {
       return this.$store.state.login;
-    }
+    },
   },
   methods: {
     logout: function() {
@@ -88,7 +123,7 @@ export default {
       this.postSha = "";
       this.postData = {
         title: "",
-        date: new Date()
+        date: new Date(),
       };
       this.postContent = "";
     },
@@ -104,6 +139,7 @@ export default {
       this.postSha = contents.sha;
       const content = b64DecodeUnicode(contents.content);
       const fm = matter(content);
+      console.log(fm.data);
       this.postData = fm.data;
       this.postContent = fm.content;
     },
@@ -172,8 +208,8 @@ export default {
       );
       await this.getPublishedPosts();
       await this.getDraftPosts();
-    }
-  }
+    },
+  },
 };
 </script>
 
