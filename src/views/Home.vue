@@ -37,12 +37,18 @@
                 :disabled="draftPosts.length === 0"
               >
                 <b-menu-item
-                  icon="account"
-                  :label="post.name"
                   v-for="post in draftPosts"
                   :key="post.sha"
                   @click="openFile(post.path)"
-                ></b-menu-item>
+                  ><template slot="label">
+                    {{ post.name }}
+                    <b-button
+                      type="is-light"
+                      icon-right="delete"
+                      @click="deletePost(post.path, post.sha)"
+                    />
+                  </template>
+                </b-menu-item>
               </b-menu-item>
             </b-menu-list>
             <b-menu-list label="Actions">
@@ -70,8 +76,40 @@
         >
         </b-datetimepicker>
       </b-field>
-      <vue-simplemde v-model="postContent" />
-      <b-button type="is-primary" @click="save">Publish</b-button>
+      <vue-simplemde v-model="postContent" style="margin-top: 2rem" />
+      <b-button
+        v-if="postPath === ''"
+        type="is-primary"
+        @click="newPublished"
+        style="margin-right: 1rem"
+        >Publish</b-button
+      >
+      <b-button
+        v-else-if="postPath.startsWith('_posts/')"
+        type="is-primary"
+        @click="updatePublished"
+        style="margin-right: 1rem"
+        >Update</b-button
+      >
+      <b-button
+        v-else-if="postPath.startsWith('_drafts/')"
+        type="is-primary"
+        @click="updateDraft"
+        style="margin-right: 1rem"
+        >Update</b-button
+      >
+
+      <b-button v-if="postPath === ''" @click="newDraft"
+        >Save as draft</b-button
+      >
+      <b-button v-else-if="postPath.startsWith('_posts/')" @click="newDraft"
+        >Save as draft</b-button
+      >
+      <b-button
+        v-else-if="postPath.startsWith('_drafts/')"
+        @click="newPublished"
+        >Publish</b-button
+      >
     </div>
   </div>
 </template>
@@ -103,15 +141,15 @@ export default {
       postSha: "",
       postData: {
         title: "",
-        date: new Date(),
+        date: new Date()
       },
-      postContent: "",
+      postContent: ""
     };
   },
   computed: {
     login() {
       return this.$store.state.login;
-    },
+    }
   },
   methods: {
     logout: function() {
@@ -123,7 +161,7 @@ export default {
       this.postSha = "";
       this.postData = {
         title: "",
-        date: new Date(),
+        date: new Date()
       };
       this.postContent = "";
     },
@@ -148,20 +186,40 @@ export default {
       }
       this.postContent = fm.content;
     },
-    save: async function() {
-      if (this.postContent === "") {
-        return;
+    newPublished: async function() {
+      if (this.postPath.startsWith("_drafts/") && this.postSha !== "") {
+        await this.githubClient.deleteFile(this.postPath, this.postSha);
+        this.postSha = "";
       }
-      // Generate path for new post
-      if (this.postSha === "") {
-        this.postPath = `_posts/${this.postData.date
-          .toISOString()
-          .slice(0, 10)}-${this.postData.title
-          .toLowerCase()
-          .split(" ")
-          .join("-")}.md`;
+      this.postPath = `_posts/${this.postData.date
+        .toISOString()
+        .slice(0, 10)}-${this.postData.title
+        .toLowerCase()
+        .split(" ")
+        .join("-")}.md`;
+      await this.githubClient.createFile(
+        this.postPath,
+        b64EncodeUnicode(matter.stringify(this.postContent, this.postData))
+      );
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Post published successfully`,
+        position: "is-bottom-right",
+        type: "is-success",
+        hasIcon: true
+      });
+    },
+    updatePublished: async function() {
+      const newPath = `_posts/${this.postData.date
+        .toISOString()
+        .slice(0, 10)}-${this.postData.title
+        .toLowerCase()
+        .split(" ")
+        .join("-")}.md`;
+      if (newPath !== this.postPath) {
+        await this.githubClient.deleteFile(this.postPath, this.postSha);
         await this.githubClient.createFile(
-          this.postPath,
+          newPath,
           b64EncodeUnicode(matter.stringify(this.postContent, this.postData))
         );
       } else {
@@ -171,50 +229,72 @@ export default {
           this.postSha
         );
       }
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Post updated successfully`,
+        position: "is-bottom-right",
+        type: "is-success",
+        hasIcon: true
+      });
+    },
+    newDraft: async function() {
+      if (this.postPath.startsWith("_posts/") && this.postSha !== "") {
+        await this.githubClient.deleteFile(this.postPath, this.postSha);
+        this.postSha = "";
+      }
+      this.postPath = `_drafts/${this.postData.title
+        .toLowerCase()
+        .split(" ")
+        .join("-")}.md`;
+      await this.githubClient.createFile(
+        this.postPath,
+        b64EncodeUnicode(matter.stringify(this.postContent, this.postData))
+      );
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Draft post created successfully`,
+        position: "is-bottom-right",
+        type: "is-success",
+        hasIcon: true
+      });
+    },
+    updateDraft: async function() {
+      const newPath = `_drafts/${this.postData.title
+        .toLowerCase()
+        .split(" ")
+        .join("-")}.md`;
+      if (newPath !== this.postPath) {
+        await this.githubClient.deleteFile(this.postPath, this.postSha);
+        await this.githubClient.createFile(
+          newPath,
+          b64EncodeUnicode(matter.stringify(this.postContent, this.postData))
+        );
+      } else {
+        await this.githubClient.updateFile(
+          this.postPath,
+          b64EncodeUnicode(matter.stringify(this.postContent, this.postData)),
+          this.postSha
+        );
+      }
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Draft post updated successfully`,
+        position: "is-bottom-right",
+        type: "is-success",
+        hasIcon: true
+      });
     },
     deletePost: async function(path, sha) {
       await this.githubClient.deleteFile(path, sha);
-    },
-    makePostDraft: async function(path, sha) {
-      const originalFileContents = await this.githubClient.getFileContents(
-        path
-      );
-      await this.githubClient.deleteFile(path, sha);
-      const content = b64DecodeUnicode(originalFileContents.content);
-      const fm = matter(content);
-      const draftPath = `_drafts/${fm.data.title
-        .toLowerCase()
-        .split(" ")
-        .join("-")}.md`;
-      await this.githubClient.createFile(
-        draftPath,
-        originalFileContents.content
-      );
-      await this.getPublishedPosts();
-      await this.getDraftPosts();
-    },
-    makePostPublished: async function(path, sha) {
-      const originalFileContents = await this.githubClient.getFileContents(
-        path
-      );
-      await this.githubClient.deleteFile(path, sha);
-
-      const content = b64DecodeUnicode(originalFileContents.content);
-      const fm = matter(content);
-      const publishedPath = `_posts/${fm.data.date
-        .toISOString()
-        .slice(0, 10)}-${fm.data.title
-        .toLowerCase()
-        .split(" ")
-        .join("-")}.md`;
-      await this.githubClient.createFile(
-        publishedPath,
-        originalFileContents.content
-      );
-      await this.getPublishedPosts();
-      await this.getDraftPosts();
-    },
-  },
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Post deleted successfully`,
+        position: "is-bottom-right",
+        type: "is-success",
+        hasIcon: true
+      });
+    }
+  }
 };
 </script>
 
