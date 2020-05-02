@@ -139,8 +139,13 @@ export default {
       this.postSha = contents.sha;
       const content = b64DecodeUnicode(contents.content);
       const fm = matter(content);
-      console.log(fm.data);
-      this.postData = fm.data;
+      this.postData.title = fm.data.title;
+      const date = Date.parse(fm.data.date);
+      if (date) {
+        this.postData.date = new Date(date);
+      } else {
+        this.postData.date = new Date();
+      }
       this.postContent = fm.content;
     },
     save: async function() {
