@@ -139,15 +139,15 @@ export default {
       postSha: "",
       postData: {
         title: "",
-        date: new Date()
+        date: new Date(),
       },
-      postContent: ""
+      postContent: "",
     };
   },
   computed: {
     login() {
       return this.$store.state.login;
-    }
+    },
   },
   methods: {
     logout: function() {
@@ -159,7 +159,7 @@ export default {
       this.postSha = "";
       this.postData = {
         title: "",
-        date: new Date()
+        date: new Date(),
       };
       this.postContent = "";
     },
@@ -191,10 +191,7 @@ export default {
       }
       this.postPath = `_posts/${this.postData.date
         .toISOString()
-        .slice(0, 10)}-${this.postData.title
-        .toLowerCase()
-        .split(" ")
-        .join("-")}.md`;
+        .slice(0, 10)}-${this.titleToPath(this.postData.title)}.md`;
       await this.githubClient.createFile(
         this.postPath,
         b64EncodeUnicode(matter.stringify(this.postContent, this.postData))
@@ -204,16 +201,13 @@ export default {
         message: `Post published successfully`,
         position: "is-bottom-right",
         type: "is-success",
-        hasIcon: true
+        hasIcon: true,
       });
     },
     updatePublished: async function() {
       const newPath = `_posts/${this.postData.date
         .toISOString()
-        .slice(0, 10)}-${this.postData.title
-        .toLowerCase()
-        .split(" ")
-        .join("-")}.md`;
+        .slice(0, 10)}-${this.titleToPath(this.postData.title)}.md`;
       if (newPath !== this.postPath) {
         await this.githubClient.deleteFile(this.postPath, this.postSha);
         await this.githubClient.createFile(
@@ -232,7 +226,7 @@ export default {
         message: `Post updated successfully`,
         position: "is-bottom-right",
         type: "is-success",
-        hasIcon: true
+        hasIcon: true,
       });
     },
     newDraft: async function() {
@@ -240,10 +234,7 @@ export default {
         await this.githubClient.deleteFile(this.postPath, this.postSha);
         this.postSha = "";
       }
-      this.postPath = `_drafts/${this.postData.title
-        .toLowerCase()
-        .split(" ")
-        .join("-")}.md`;
+      this.postPath = `_drafts/${this.titleToPath(this.postData.title)}.md`;
       await this.githubClient.createFile(
         this.postPath,
         b64EncodeUnicode(matter.stringify(this.postContent, this.postData))
@@ -253,14 +244,11 @@ export default {
         message: `Draft post created successfully`,
         position: "is-bottom-right",
         type: "is-success",
-        hasIcon: true
+        hasIcon: true,
       });
     },
     updateDraft: async function() {
-      const newPath = `_drafts/${this.postData.title
-        .toLowerCase()
-        .split(" ")
-        .join("-")}.md`;
+      const newPath = `_drafts/${this.titleToPath(this.postData.title)}.md`;
       if (newPath !== this.postPath) {
         await this.githubClient.deleteFile(this.postPath, this.postSha);
         await this.githubClient.createFile(
@@ -279,7 +267,7 @@ export default {
         message: `Draft post updated successfully`,
         position: "is-bottom-right",
         type: "is-success",
-        hasIcon: true
+        hasIcon: true,
       });
     },
     deletePost: async function() {
@@ -289,10 +277,17 @@ export default {
         message: `Post deleted successfully`,
         position: "is-bottom-right",
         type: "is-success",
-        hasIcon: true
+        hasIcon: true,
       });
-    }
-  }
+    },
+    titleToPath(title) {
+      return title
+        .toLowerCase()
+        .split(" ")
+        .join("-")
+        .replace(/[^a-zA-Z0-9-_]/g, "");
+    },
+  },
 };
 </script>
 
