@@ -22,17 +22,12 @@
                   @click="openFile(post.path)"
                   ><template slot="label">
                     {{ post.name }}
-                    <b-button
-                      type="is-light"
-                      icon-right="delete"
-                      @click="deletePost(post.path, post.sha)"
-                    /> </template
-                ></b-menu-item>
+                  </template>
+                </b-menu-item>
               </b-menu-item>
               <b-menu-item
                 active
                 expanded
-                icon="settings"
                 label="Draft posts"
                 :disabled="draftPosts.length === 0"
               >
@@ -42,11 +37,6 @@
                   @click="openFile(post.path)"
                   ><template slot="label">
                     {{ post.name }}
-                    <b-button
-                      type="is-light"
-                      icon-right="delete"
-                      @click="deletePost(post.path, post.sha)"
-                    />
                   </template>
                 </b-menu-item>
               </b-menu-item>
@@ -110,6 +100,14 @@
         @click="newPublished"
         >Publish</b-button
       >
+
+      <b-button
+        v-if="postPath && postSha"
+        type="is-danger"
+        icon-right="delete"
+        @click="deletePost"
+        style="margin-left: 1rem"
+      />
     </div>
   </div>
 </template>
@@ -284,8 +282,8 @@ export default {
         hasIcon: true
       });
     },
-    deletePost: async function(path, sha) {
-      await this.githubClient.deleteFile(path, sha);
+    deletePost: async function() {
+      await this.githubClient.deleteFile(this.postPath, this.postSha);
       this.$buefy.notification.open({
         duration: 5000,
         message: `Post deleted successfully`,
